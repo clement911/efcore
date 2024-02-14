@@ -80,6 +80,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
         private readonly RelationalShapedQueryCompilingExpressionVisitor _parentVisitor;
         private readonly ISet<string>? _tags;
         private readonly bool _isTracking;
+        private readonly bool _queryStateManager;
         private readonly bool _isAsync;
         private readonly bool _splitQuery;
         private readonly bool _detailedErrorsEnabled;
@@ -186,6 +187,8 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             _generateCommandCache = true;
             _detailedErrorsEnabled = parentVisitor._detailedErrorsEnabled;
             _isTracking = parentVisitor.QueryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.TrackAll;
+            _queryStateManager = parentVisitor.QueryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.TrackAll
+                || parentVisitor.QueryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.NoTrackingWithIdentityResolution;
             _isAsync = parentVisitor.QueryCompilationContext.IsAsync;
             _splitQuery = splitQuery;
 
@@ -212,6 +215,8 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             _generateCommandCache = false;
             _detailedErrorsEnabled = parentVisitor._detailedErrorsEnabled;
             _isTracking = parentVisitor.QueryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.TrackAll;
+            _queryStateManager = parentVisitor.QueryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.TrackAll
+                || parentVisitor.QueryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.NoTrackingWithIdentityResolution;
             _isAsync = parentVisitor.QueryCompilationContext.IsAsync;
             _splitQuery = false;
         }
@@ -241,6 +246,8 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             _generateCommandCache = true;
             _detailedErrorsEnabled = parentVisitor._detailedErrorsEnabled;
             _isTracking = parentVisitor.QueryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.TrackAll;
+            _queryStateManager = parentVisitor.QueryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.TrackAll
+                || parentVisitor.QueryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.NoTrackingWithIdentityResolution;
             _isAsync = parentVisitor.QueryCompilationContext.IsAsync;
             _splitQuery = true;
 
@@ -1390,7 +1397,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
 
             var rewrittenEntityShaperMaterializer = new JsonEntityMaterializerRewriter(
                 entityType,
-                _isTracking,
+                _queryStateManager,
                 jsonReaderDataShaperLambdaParameter,
                 innerShapersMap,
                 innerFixupMap,
@@ -1512,7 +1519,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
         private sealed class JsonEntityMaterializerRewriter : ExpressionVisitor
         {
             private readonly IEntityType _entityType;
-            private readonly bool _isTracking;
+            private readonly bool _queryStateManager;
             private readonly ParameterExpression _jsonReaderDataParameter;
             private readonly IDictionary<string, Expression> _innerShapersMap;
             private readonly IDictionary<string, LambdaExpression> _innerFixupMap;
@@ -1528,7 +1535,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
 
             public JsonEntityMaterializerRewriter(
                 IEntityType entityType,
-                bool isTracking,
+                bool queryStateManager,
                 ParameterExpression jsonReaderDataParameter,
                 IDictionary<string, Expression> innerShapersMap,
                 IDictionary<string, LambdaExpression> innerFixupMap,
@@ -1536,7 +1543,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
                 IDiagnosticsLogger<DbLoggerCategory.Query> queryLogger)
             {
                 _entityType = entityType;
-                _isTracking = isTracking;
+                _queryStateManager = queryStateManager;
                 _jsonReaderDataParameter = jsonReaderDataParameter;
                 _innerShapersMap = innerShapersMap;
                 _innerFixupMap = innerFixupMap;
@@ -1700,9 +1707,9 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
                         finalBlockExpressions.Add(propertyAssignmentReplacer.Visit(jsonEntityTypeInitializerBlockExpression));
                     }
 
-                    // Fixup is only needed for non-tracking queries, in case of tracking - ChangeTracker does the job
+                    // Fixup is only needed for non-tracking queries, in case of tracking (or NoTrackingWithIdentityResolution) - ChangeTracker does the job
                     // or for empty/null collections of a tracking queries.
-                    if (_isTracking)
+                    if (_queryStateManager)
                     {
                         ProcessFixup(_trackingInnerFixupMap);
                     }
@@ -1879,7 +1886,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
                 // the code here re-arranges the existing materializer so that even if we find parent in the change tracker
                 // we still process all the child navigations, it's just that we use the parent instance from change tracker, rather than create new one
 #pragma warning disable EF1001 // Internal EF Core API usage.
-                if (_isTracking
+                if (_queryStateManager
                     && visited is ConditionalExpression
                     {
                         Test: BinaryExpression

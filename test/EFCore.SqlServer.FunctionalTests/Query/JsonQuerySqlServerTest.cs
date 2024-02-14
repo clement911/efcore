@@ -37,6 +37,17 @@ FROM [JsonEntitiesBasic] AS [j]
 """);
     }
 
+    public override async Task Basic_json_projection_owner_entity_NoTrackingWithIdentityResolution(bool async)
+    {
+        await base.Basic_json_projection_owner_entity_NoTrackingWithIdentityResolution(async);
+
+        AssertSql(
+            """
+SELECT [j].[Id], [j].[EntityBasicId], [j].[Name], [j].[OwnedCollectionRoot], [j].[OwnedReferenceRoot]
+FROM [JsonEntitiesBasic] AS [j]
+""");
+    }
+
     public override async Task Basic_json_projection_owner_entity_duplicated(bool async)
     {
         await base.Basic_json_projection_owner_entity_duplicated(async);
@@ -51,6 +62,17 @@ FROM [JsonEntitiesBasic] AS [j]
     public override async Task Basic_json_projection_owner_entity_duplicated_NoTracking(bool async)
     {
         await base.Basic_json_projection_owner_entity_duplicated_NoTracking(async);
+
+        AssertSql(
+            """
+SELECT [j].[Id], [j].[Name], [j].[OwnedCollection], [j].[OwnedCollection]
+FROM [JsonEntitiesSingleOwned] AS [j]
+""");
+    }
+
+    public override async Task Basic_json_projection_owner_entity_duplicated_NoTrackingWithIdentityResolution(bool async)
+    {
+        await base.Basic_json_projection_owner_entity_duplicated_NoTrackingWithIdentityResolution(async);
 
         AssertSql(
             """
@@ -81,6 +103,17 @@ FROM [JsonEntitiesBasic] AS [j]
 """);
     }
 
+    public override async Task Basic_json_projection_owner_entity_twice_NoTrackingWithIdentityResolution(bool async)
+    {
+        await base.Basic_json_projection_owner_entity_twice_NoTrackingWithIdentityResolution(async);
+
+        AssertSql(
+            """
+SELECT [j].[Id], [j].[EntityBasicId], [j].[Name], [j].[OwnedCollectionRoot], [j].[OwnedReferenceRoot], [j].[OwnedCollectionRoot], [j].[OwnedReferenceRoot]
+FROM [JsonEntitiesBasic] AS [j]
+""");
+    }
+
     public override async Task Basic_json_projection_owned_reference_root(bool async)
     {
         await base.Basic_json_projection_owned_reference_root(async);
@@ -92,15 +125,14 @@ FROM [JsonEntitiesBasic] AS [j]
 """);
     }
 
-    public override async Task Basic_json_projection_owned_reference_duplicated2(bool async)
+    public override async Task Basic_json_projection_owned_reference_root_NoTrackingWithIdentityResolution(bool async)
     {
-        await base.Basic_json_projection_owned_reference_duplicated2(async);
+        await base.Basic_json_projection_owned_reference_root_NoTrackingWithIdentityResolution(async);
 
         AssertSql(
             """
-SELECT [j].[OwnedReferenceRoot], [j].[Id], JSON_QUERY([j].[OwnedReferenceRoot], '$.OwnedReferenceBranch.OwnedReferenceLeaf'), [j].[OwnedReferenceRoot], JSON_QUERY([j].[OwnedReferenceRoot], '$.OwnedReferenceBranch.OwnedReferenceLeaf')
+SELECT [j].[OwnedReferenceRoot], [j].[Id]
 FROM [JsonEntitiesBasic] AS [j]
-ORDER BY [j].[Id]
 """);
     }
 
@@ -116,9 +148,56 @@ ORDER BY [j].[Id]
 """);
     }
 
+    public override async Task Basic_json_projection_owned_reference_duplicated_NoTrackingWithIdentityResolution(bool async)
+    {
+        await base.Basic_json_projection_owned_reference_duplicated_NoTrackingWithIdentityResolution(async);
+
+        AssertSql(
+            """
+SELECT [j].[OwnedReferenceRoot], [j].[Id], JSON_QUERY([j].[OwnedReferenceRoot], '$.OwnedReferenceBranch'), [j].[OwnedReferenceRoot], JSON_QUERY([j].[OwnedReferenceRoot], '$.OwnedReferenceBranch')
+FROM [JsonEntitiesBasic] AS [j]
+ORDER BY [j].[Id]
+""");
+    }
+
+    public override async Task Basic_json_projection_owned_reference_duplicated2(bool async)
+    {
+        await base.Basic_json_projection_owned_reference_duplicated2(async);
+
+        AssertSql(
+            """
+SELECT [j].[OwnedReferenceRoot], [j].[Id], JSON_QUERY([j].[OwnedReferenceRoot], '$.OwnedReferenceBranch.OwnedReferenceLeaf'), [j].[OwnedReferenceRoot], JSON_QUERY([j].[OwnedReferenceRoot], '$.OwnedReferenceBranch.OwnedReferenceLeaf')
+FROM [JsonEntitiesBasic] AS [j]
+ORDER BY [j].[Id]
+""");
+    }
+
+    public override async Task Basic_json_projection_owned_reference_duplicated2_NoTrackingWithIdentityResolution(bool async)
+    {
+        await base.Basic_json_projection_owned_reference_duplicated2_NoTrackingWithIdentityResolution(async);
+
+        AssertSql(
+            """
+SELECT [j].[OwnedReferenceRoot], [j].[Id], JSON_QUERY([j].[OwnedReferenceRoot], '$.OwnedReferenceBranch.OwnedReferenceLeaf'), [j].[OwnedReferenceRoot], JSON_QUERY([j].[OwnedReferenceRoot], '$.OwnedReferenceBranch.OwnedReferenceLeaf')
+FROM [JsonEntitiesBasic] AS [j]
+ORDER BY [j].[Id]
+""");
+    }
+
     public override async Task Basic_json_projection_owned_collection_root(bool async)
     {
         await base.Basic_json_projection_owned_collection_root(async);
+
+        AssertSql(
+            """
+SELECT [j].[OwnedCollectionRoot], [j].[Id]
+FROM [JsonEntitiesBasic] AS [j]
+""");
+    }
+
+    public override async Task Basic_json_projection_owned_collection_root_NoTrackingWithIdentityResolution(bool async)
+    {
+        await base.Basic_json_projection_owned_collection_root_NoTrackingWithIdentityResolution(async);
 
         AssertSql(
             """
@@ -138,9 +217,31 @@ FROM [JsonEntitiesBasic] AS [j]
 """);
     }
 
+    public override async Task Basic_json_projection_owned_reference_branch_NoTrackingWithIdentityResolution(bool async)
+    {
+        await base.Basic_json_projection_owned_reference_branch_NoTrackingWithIdentityResolution(async);
+
+        AssertSql(
+            """
+SELECT JSON_QUERY([j].[OwnedReferenceRoot], '$.OwnedReferenceBranch'), [j].[Id]
+FROM [JsonEntitiesBasic] AS [j]
+""");
+    }
+
     public override async Task Basic_json_projection_owned_collection_branch(bool async)
     {
         await base.Basic_json_projection_owned_collection_branch(async);
+
+        AssertSql(
+            """
+SELECT JSON_QUERY([j].[OwnedReferenceRoot], '$.OwnedCollectionBranch'), [j].[Id]
+FROM [JsonEntitiesBasic] AS [j]
+""");
+    }
+
+    public override async Task Basic_json_projection_owned_collection_branch_NoTrackingWithIdentityResolution(bool async)
+    {
+        await base.Basic_json_projection_owned_collection_branch_NoTrackingWithIdentityResolution(async);
 
         AssertSql(
             """
