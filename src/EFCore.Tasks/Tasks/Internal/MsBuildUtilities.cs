@@ -16,16 +16,12 @@ namespace Microsoft.EntityFrameworkCore.Tasks.Internal;
 internal class MsBuildUtilities
 {
     public static string[] Split(string s)
-    {
-        if (!string.IsNullOrEmpty(s))
-        {
-            return s.Split(';')
+        => !string.IsNullOrEmpty(s)
+            ? s.Split(';')
                 .Select(entry => entry.Trim())
                 .Where(entry => entry.Length != 0)
-                .ToArray();
-        }
-        return Array.Empty<string>();
-    }
+                .ToArray()
+            : [];
 
     public static string? TrimAndGetNullForEmpty(string? s)
     {
@@ -40,46 +36,19 @@ internal class MsBuildUtilities
     }
 
     public static string[] TrimAndExcludeNullOrEmpty(string?[]? strings)
-    {
-        if (strings == null)
-        {
-            return Array.Empty<string>();
-        }
+        => strings == null
+            ? []
+            : strings
+                .Select(TrimAndGetNullForEmpty)
+                .Where(s => s != null)
+                .Cast<string>()
+                .ToArray();
 
-        return strings
-            .Select(s => TrimAndGetNullForEmpty(s))
-            .Where(s => s != null)
-            .Cast<string>()
-            .ToArray();
-    }
+    public static bool IsTrue(string? value) => bool.TrueString.Equals(TrimAndGetNullForEmpty(value), StringComparison.OrdinalIgnoreCase);
 
-    public static bool IsTrue(string? value)
-    {
-        return bool.TrueString.Equals(TrimAndGetNullForEmpty(value), StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool IsTrueOrEmpty(string? value) => TrimAndGetNullForEmpty(value) == null || IsTrue(value);
 
-    public static bool IsTrueOrEmpty(string? value)
-    {
-        return TrimAndGetNullForEmpty(value) == null || IsTrue(value);
-    }
+    public static bool? GetBooleanOrNull(string? value) => bool.TryParse(value, out var result) ? result : null;
 
-    public static bool? GetBooleanOrNull(string? value)
-    {
-        if (bool.TryParse(value, out var result))
-        {
-            return result;
-        }
-
-        return null;
-    }
-
-    public static string? ToMsBuild(string? value)
-    {
-        if (value == null)
-        {
-            return null;
-        }
-
-        return value.Replace(',', ';');
-    }
+    public static string? ToMsBuild(string? value) => value?.Replace(',', ';');
 }
