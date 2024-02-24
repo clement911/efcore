@@ -36,10 +36,13 @@ namespace TestNamespace
 
             model.Customize();
             _instance = (FunctionParameterTypeMappingContextModel)model.FinalizeModel();
+           OnModelFinalized(_instance);
         }
 
         private static FunctionParameterTypeMappingContextModel _instance;
         public static IModel Instance => _instance;
+
+        static partial void OnModelFinalized(IModel model);
 
         partial void Initialize();
 
